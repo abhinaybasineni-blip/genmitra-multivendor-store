@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 type Product = {
   id: number;
@@ -57,7 +59,7 @@ function App() {
       setProductError("");
 
       const response = await fetch(
-        "http://localhost:5000/api/products"
+       `${API_URL}/api/products`
       );
 
       if (!response.ok) {
