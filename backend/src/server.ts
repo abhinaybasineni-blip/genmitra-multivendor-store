@@ -9,23 +9,20 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-/* =========================
-   DATABASE CONNECTION
-========================= */
-
-const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  user: "postgres",
-  password: process.env.DB_PASSWORD,
-  database: "genmitra_store",
-});
-
-/* =========================
-   TEST DATABASE CONNECTION
-========================= */
-
+const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+      }
+    : {
+        host: "localhost",
+        port: 5432,
+        user: "postgres",
+        password: process.env.DB_PASSWORD,
+        database: "genmitra_store",
+      }
+);
 pool.query("SELECT NOW()", (error, result) => {
   if (error) {
     console.error("Database connection failed:", error);
@@ -33,11 +30,6 @@ pool.query("SELECT NOW()", (error, result) => {
     console.log("PostgreSQL connected:", result.rows[0]);
   }
 });
-
-/* =========================
-   GET ALL PRODUCTS
-========================= */
-
 app.get("/api/products", async (_req, res) => {
   try {
     const result = await pool.query(`
@@ -63,11 +55,6 @@ app.get("/api/products", async (_req, res) => {
     });
   }
 });
-
-/* =========================
-   ADD PRODUCT
-========================= */
-
 app.post("/api/products", async (req, res) => {
   try {
     const {
@@ -156,11 +143,6 @@ app.post("/api/orders", async (req, res) => {
       quantity: number;
       price: number;
     }[] = [];
-
-    /* -------------------------
-       VALIDATE CART ITEMS
-    ------------------------- */
-
     for (const item of items) {
       const productId = Number(item.productId);
       const quantity = Number(item.quantity);
@@ -203,13 +185,8 @@ app.post("/api/orders", async (req, res) => {
         quantity,
         price,
       });
-    }
-
-    /* -------------------------
-       CREATE ORDER
-    ------------------------- */
-
-    const orderResult = await client.query(
+    }   
+     const orderResult = await client.query(
       `
       INSERT INTO orders (total_amount)
       VALUES ($1)
@@ -219,11 +196,6 @@ app.post("/api/orders", async (req, res) => {
     );
 
     const order = orderResult.rows[0];
-
-    /* -------------------------
-       CREATE ORDER ITEMS
-    ------------------------- */
-
     for (const item of validatedItems) {
       await client.query(
         `
@@ -269,10 +241,6 @@ app.post("/api/orders", async (req, res) => {
   }
 });
 
-/* =========================
-   GET ORDER HISTORY
-========================= */
-
 app.get("/api/orders", async (_req, res) => {
   const client = await pool.connect();
 
@@ -304,9 +272,6 @@ app.get("/api/orders", async (_req, res) => {
         oi.id ASC
     `);
 
-    /* -------------------------
-       GROUP ITEMS BY ORDER
-    ------------------------- */
 
     const ordersMap = new Map();
 
@@ -341,11 +306,8 @@ app.get("/api/orders", async (_req, res) => {
     client.release();
   }
 });
+const PORT = Number(process.env.PORT) || 5000;
 
-/* =========================
-   SERVER
-========================= */
-
-app.listen(5000, () => {
-  console.log("Server running on http://localhost:5000");
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });
