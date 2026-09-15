@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+const API_URL = "https://genmitra-multivendor-store.onrender.com";
 type Product = {
   id: number;
   name: string;
@@ -113,7 +111,7 @@ function App() {
       setLoadingOrders(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/orders"
+        `${API_URL}/api/orders`
       );
 
       if (!response.ok) {
@@ -348,8 +346,8 @@ function App() {
       setCheckoutLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/orders",
-        {
+        `${API_URL}/api/orders`
+        ,{
           method: "POST",
 
           headers: {
